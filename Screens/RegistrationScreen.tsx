@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { colors } from "../styles/global";
-// import Input from "../components/input";
+import Input from "../components/input";
 
 const RegistrationScreen = () => {
   const [passwordVisible, setPasswordVisible] = useState(false);
