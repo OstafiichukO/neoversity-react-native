@@ -4,13 +4,13 @@ import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import * as Location from "expo-location";
 import axios from 'axios';
 import { RouteProp } from '@react-navigation/native';
+import { GOOGLE_API_KEY } from '@env';
 
 type Coords = {
   latitude: number;
   longitude: number
 };
 
-const GOOGLE_API_KEY = 'AIzaSyDqH68WOdeBYJ-LdTSfZMYem8ftgTV2rgE';
 
 type MapScreenProps = {
   route: RouteProp<{ params: { location: string } }, 'params'>;
@@ -60,6 +60,7 @@ const MapScreen: React.FC<MapScreenProps> = ({ route }) => {
           latitudeDelta: 0.0922,
           longitudeDelta: 0.0421,
         }}
+        minZoomLevel={15}
         showsUserLocation={true}
         onMapReady={() => console.log("Map is ready")}
         onRegionChange={() => console.log("Region change")}
