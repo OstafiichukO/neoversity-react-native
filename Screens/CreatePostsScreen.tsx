@@ -1,4 +1,4 @@
-import React, { FC, useState, useRef, useEffect } from 'react';
+import React, { FC, useState, useRef, useEffect } from "react";
 import {
 	View,
 	Text,
@@ -11,32 +11,38 @@ import {
 	Dimensions,
 	TextInput,
 	Button,
-	Image,
-} from 'react-native';
+	Image
+} from "react-native";
 import { useNavigation } from '@react-navigation/native';
-import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
-import * as MediaLibrary from 'expo-media-library';
-import { colors } from '../styles/global';
-import CameraIcon from '@/icons/CameraIcon';
-import LocationIcon from '@/icons/LocationIcon';
+import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
+import * as MediaLibrary from "expo-media-library";
+import { colors } from "../styles/global";
+import CameraIcon from "../icons/CameraIcon";
+import LocationIcon from "../icons/LocationIcon";
 import * as Location from 'expo-location';
-import TrashIcon from '@/icons/TrashIcon';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('screen');
+import TrashIcon from "../icons/TrashIcon";
+import { doc, setDoc } from "firebase/firestore";
+import { db } from "../newConfig";
+import { addPost } from '../redux/reducers/postSlice'
+import {createPost} from '../utils/firestore'
+const { width: SCREEN_WIDTH } = Dimensions.get("screen");
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "../redux/store/store";
 
 const CreatePostsScreen: FC = () => {
 	const [isActiveBtn, setIsActiveBtn] = useState(false);
 	const [facing, setFacing] = useState<CameraType>('back');
 	const [permission, requestPermission] = useCameraPermissions();
 	const [capturedImage, setCapturedImage] = useState<string | null>(null);
-	const [name, setName] = useState<string>('');
-	const [locationName, setLocationName] = useState('');
-	const [location, setLocation] = useState<string>('');
-	const [errorMsg, setErrorMsg] = useState('');
+	const [name, setName] = useState<string>("");
+	const [locationName, setLocationName] = useState("");
+	const [location, setLocation] = useState<string>("");
+	const [errorMsg, setErrorMsg] = useState("");
 	const [address, setAddress] = useState(null);
+	const userInfo = useSelector((state: RootState) => state.user.userInfo);
 
 	const camera = useRef();
-
+	const dispatch = useDispatch(); 
 	const navigation = useNavigation();
 
 	useEffect(() => {
@@ -54,17 +60,18 @@ const CreatePostsScreen: FC = () => {
 
 	useEffect(() => {
 		return () => {
-			setCapturedImage(null);
-		};
-	}, []);
+			setCapturedImage(null)
+		}
+	}, [])
 
 	useEffect(() => {
 		if (name && locationName && capturedImage) {
-			setIsActiveBtn(true);
-		} else {
-			setIsActiveBtn(false);
+			setIsActiveBtn(true)
 		}
-	}, [name, locationName, capturedImage]);
+		else {
+			setIsActiveBtn(false)
+		}
+	}, [name, locationName, capturedImage])
 
 	if (!permission) {
 		return <View />;
@@ -73,61 +80,78 @@ const CreatePostsScreen: FC = () => {
 	if (!permission.granted) {
 		return (
 			<View style={styles.container}>
-				<Text style={styles.message}>
-					We need your permission to show the camera
-				</Text>
+				<Text style={styles.message}>We need your permission to show the camera</Text>
 				<Button onPress={requestPermission} title="grant permission" />
 			</View>
 		);
 	}
 
-	// function toggleCameraFacing() {
-	// 	setFacing(current => (current === 'back' ? 'front' : 'back'));
-	// };
-
 	const takePhoto = async () => {
 		if (!camera) return;
 		const image = await camera?.current?.takePictureAsync();
 		await MediaLibrary.saveToLibraryAsync(image.uri);
-		setCapturedImage(image.uri);
-	};
+		setCapturedImage(image.uri)
+	}
 
 	const dismissKeyboard = () => {
 		Keyboard.dismiss();
 	};
+	const handleClear = () => {
+		setLocationName("")
+		setCapturedImage(null)
+		setName("")
+		setIsActiveBtn(false)
+	}
 
-	const handlePublish = async () => {
+	const handlePublishAndSavePost = async () => {
 		if (location) {
 			const { latitude, longitude } = location.coords;
-
+	
 			let reverseGeocode = await Location.reverseGeocodeAsync({
 				latitude,
 				longitude,
 			});
-
+	
 			if (reverseGeocode.length > 0) {
 				const { city, region, country, street } = reverseGeocode[0];
 				const currentLocation = `${street}, ${city}, ${region}, ${country}`;
 				setAddress(currentLocation);
-				console.log(address);
+	
+				// Prepare post data
+				const postData = {
+					id: Date.now().toString(), // Generates a unique ID for the post
+					name,
+					locationName,
+					capturedImage,
+					location: currentLocation,
+					latitude,
+					longitude,
+				};
+	
+				try {
+					await createPost(userInfo.uid, postData);  
+					console.log("Post successfully created!");
+	
+					dispatch(addPost(postData)); 
+	
+					navigation.navigate('Home');
+				} catch (error) {
+					console.error("Error creating post: ", error);
+				}
+	
+			} else {
+				console.log("Reverse geocode failed. No address found.");
 			}
-			navigation.navigate('Home');
 		} else {
-			console.log('Location not available');
+			console.log("Location not available");
 		}
-	};
-	const handleClear = () => {
-		setLocationName('');
-		setCapturedImage(null);
-		setName('');
-		setIsActiveBtn(false);
 	};
 
 	return (
 		<TouchableWithoutFeedback onPress={dismissKeyboard}>
 			<KeyboardAvoidingView
 				style={styles.container}
-				behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+				behavior={Platform.OS === "ios" ? "padding" : "height"}
 			>
 				<View style={styles.contentContainer}>
 					<View style={styles.profileImageContainer}>
@@ -138,16 +162,14 @@ const CreatePostsScreen: FC = () => {
 									style={styles.capturedImage}
 								/>
 								<View style={styles.photoCircleLight}>
-									<CameraIcon fill="#FFF" />
+									<CameraIcon fill='#FFF' />
 								</View>
 							</View>
 						) : (
 							<CameraView ref={camera} style={styles.camera} facing={facing}>
 								<View style={styles.buttonContainer}>
-									<TouchableOpacity
-										style={styles.photoCircle}
-										onPress={takePhoto}
-									>
+									<TouchableOpacity style={styles.photoCircle}
+										onPress={takePhoto}>
 										<CameraIcon />
 									</TouchableOpacity>
 								</View>
@@ -176,22 +198,10 @@ const CreatePostsScreen: FC = () => {
 					</View>
 
 					<TouchableOpacity
-						onPress={handlePublish}
-						style={[
-							isActiveBtn
-								? styles.registerButton
-								: styles.registerButtonDisabled,
-						]}
-					>
-						<Text
-							style={[
-								isActiveBtn
-									? styles.registerButtonText
-									: styles.registerButtonTextDisabled,
-							]}
-						>
-							Опублікувати
-						</Text>
+						onPress={handlePublishAndSavePost}  // Save post when published
+						style={[isActiveBtn ? styles.registerButton : styles.registerButtonDisabled]}>
+						<Text style={[isActiveBtn ? styles.registerButtonText : styles.registerButtonTextDisabled]}>
+							Опублікувати</Text>
 					</TouchableOpacity>
 					<TouchableOpacity onPress={handleClear} style={styles.trashContainer}>
 						<TrashIcon style={styles.trashIcon} />
@@ -201,14 +211,13 @@ const CreatePostsScreen: FC = () => {
 		</TouchableWithoutFeedback>
 	);
 };
-
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
 		backgroundColor: colors.white,
 	},
 	contentContainer: {
-		alignItems: 'center',
+		alignItems: "center",
 		paddingHorizontal: 16,
 		paddingTop: 32,
 	},
@@ -223,7 +232,7 @@ const styles = StyleSheet.create({
 	trashIcon: {
 		position: 'absolute',
 		top: 7,
-		left: 23,
+		left: 23
 	},
 	profileImageContainer: {
 		position: 'relative',
@@ -232,70 +241,76 @@ const styles = StyleSheet.create({
 		width: SCREEN_WIDTH - 32,
 		height: 240,
 		borderRadius: 8,
-		backgroundColor: '#F6F6F6',
-		alignSelf: 'center',
+		backgroundColor: "#F6F6F6",
+		alignSelf: "center",
 		marginTop: 32,
 		borderWidth: 1,
-		borderColor: '#E8E8E8',
+		borderColor: "#E8E8E8",
 	},
 	photoCircle: {
-		position: 'absolute',
+		position: "absolute",
 		right: '50%',
 		top: '50%',
-		transform: [{ translateX: 30 }, { translateY: -25 }],
+		transform: [
+			{ translateX: 30 },
+			{ translateY: -25 },
+		],
 		width: 60,
 		height: 60,
-		backgroundColor: '#FFFFFF',
+		backgroundColor: "#FFFFFF",
 		borderRadius: 50,
-		alignItems: 'center',
-		justifyContent: 'center',
+		alignItems: "center",
+		justifyContent: "center",
 	},
 	photoCircleLight: {
-		position: 'absolute',
+		position: "absolute",
 		right: '50%',
 		top: '50%',
-		transform: [{ translateX: 30 }, { translateY: -25 }],
+		transform: [
+			{ translateX: 30 },
+			{ translateY: -25 },
+		],
 		width: 60,
 		height: 60,
-		backgroundColor: 'rgba(255, 255, 255, 0.3)',
+		backgroundColor: "rgba(255, 255, 255, 0.3)",
 		borderRadius: 50,
-		alignItems: 'center',
-		justifyContent: 'center',
+		alignItems: "center",
+		justifyContent: "center",
 	},
 	registerButton: {
-		width: '100%',
+		width: "100%",
 		height: 50,
-		backgroundColor: '#ff7f00',
-		alignItems: 'center',
-		justifyContent: 'center',
+		backgroundColor: "#ff7f00",
+		alignItems: "center",
+		justifyContent: "center",
 		borderRadius: 100,
 		marginBottom: 16,
 		marginTop: 32,
 	},
 	registerButtonDisabled: {
-		width: '100%',
+		width: "100%",
 		height: 50,
-		backgroundColor: '#F6F6F6',
-		alignItems: 'center',
-		justifyContent: 'center',
+		backgroundColor: "#F6F6F6",
+		alignItems: "center",
+		justifyContent: "center",
 		borderRadius: 100,
 		marginBottom: 16,
 		marginTop: 32,
 	},
 	registerButtonText: {
-		fontFamily: 'Roboto-Regular',
-		color: 'white',
+		fontFamily: "Roboto-Regular",
+		color: "white",
 		fontSize: 16,
 	},
 	registerButtonTextDisabled: {
-		fontFamily: 'Roboto-Regular',
+		fontFamily: "Roboto-Regular",
 		color: '#BDBDBD',
 		fontSize: 16,
 	},
 	text: {
 		alignSelf: 'flex-start',
 		fontSize: 16,
-		fontWeight: '400',
+		fontWeight: "400",
 		marginTop: 8,
 		color: '#BDBDBD',
 	},
@@ -304,20 +319,20 @@ const styles = StyleSheet.create({
 		position: 'relative',
 	},
 	input: {
-		width: '100%',
+		width: "100%",
 		height: 50,
-		backgroundColor: '#ffffff',
-		borderColor: '#E8E8E8',
+		backgroundColor: "#ffffff",
+		borderColor: "#E8E8E8",
 		borderBottomWidth: 1,
 		marginBottom: 16,
 		fontSize: 16,
 		fontWeight: 500,
 	},
 	locationInput: {
-		width: '100%',
+		width: "100%",
 		height: 50,
-		backgroundColor: '#ffffff',
-		borderColor: '#E8E8E8',
+		backgroundColor: "#ffffff",
+		borderColor: "#E8E8E8",
 		borderBottomWidth: 1,
 		marginBottom: 16,
 		fontSize: 16,
@@ -325,13 +340,13 @@ const styles = StyleSheet.create({
 		paddingLeft: 28,
 	},
 	locationIcon: {
-		position: 'absolute',
+		position: "absolute",
 		left: 0,
 		top: 13,
-		backgroundColor: '#fff',
+		backgroundColor: "#fff",
 		borderRadius: 50,
-		alignItems: 'center',
-		justifyContent: 'center',
+		alignItems: "center",
+		justifyContent: "center",
 	},
 	message: {
 		textAlign: 'center',

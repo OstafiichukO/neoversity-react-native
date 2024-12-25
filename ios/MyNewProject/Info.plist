@@ -34,8 +34,6 @@
     </array>
     <key>CFBundleVersion</key>
     <string>1</string>
-    <key>GMSApiKey</key>
-    <string>AIzaSyCw5RG5hV0guHJOEenpb6afKt2MGSZB_Tw</string>
     <key>LSRequiresIPhoneOS</key>
     <true/>
     <key>NSAppTransportSecurity</key>
@@ -48,28 +46,20 @@
     <key>NSCameraUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your camera</string>
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-    <string>This app requires access to your location even when closed.</string>
+    <string>Allow $(PRODUCT_NAME) to access your location</string>
     <key>NSLocationAlwaysUsageDescription</key>
-    <string>This app requires access to your location when open.</string>
+    <string>Allow $(PRODUCT_NAME) to access your location</string>
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>This app requires access to your location when open.</string>
-    <key>NSMediaLibraryUsageDescription</key>
-    <string>This app requires access to your camera when open.</string>
+    <string>Allow $(PRODUCT_NAME) to access your location</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your microphone</string>
     <key>NSPhotoLibraryAddUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to save photos.</string>
+    <string>Allow $(PRODUCT_NAME) to save photos</string>
     <key>NSPhotoLibraryUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to access your photos.</string>
+    <string>Allow $(PRODUCT_NAME) to access your photos</string>
     <key>NSUserActivityTypes</key>
     <array>
       <string>$(PRODUCT_BUNDLE_IDENTIFIER).expo.index_route</string>
-    </array>
-    <key>UIBackgroundModes</key>
-    <array>
-      <string>location</string>
-      <string>fetch</string>
-      <string>remote-notification</string>
     </array>
     <key>UILaunchStoryboardName</key>
     <string>SplashScreen</string>
@@ -97,7 +87,5 @@
     <string>Automatic</string>
     <key>UIViewControllerBasedStatusBarAppearance</key>
     <false/>
-    <key>deploymentTarget</key>
-    <string>14</string>
   </dict>
 </plist>

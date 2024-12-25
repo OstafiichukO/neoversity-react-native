@@ -11,7 +11,6 @@ type Coords = {
   longitude: number
 };
 
-
 type MapScreenProps = {
   route: RouteProp<{ params: { location: string } }, 'params'>;
 };
@@ -24,7 +23,7 @@ const MapScreen: React.FC<MapScreenProps> = ({ route }) => {
       const response = await axios.get(
         `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${GOOGLE_API_KEY}`
       );
-
+  
       if (response.data.results.length > 0) {
         const location = response.data.results[0].geometry.location;
         return {
@@ -41,7 +40,7 @@ const MapScreen: React.FC<MapScreenProps> = ({ route }) => {
   };
 
   useEffect(() => {
-    const { location: address } = route.params;
+    const { location: address } = route.params; 
     getCoordinates(address).then(coords => {
       setLocation(coords);
 
@@ -55,7 +54,7 @@ const MapScreen: React.FC<MapScreenProps> = ({ route }) => {
       <MapView
         style={styles.mapStyle}
         region={{
-          latitude: location ? location.latitude : 37.78825,
+          latitude: location ? location.latitude : 37.78825, 
           longitude: location ? location.longitude : -122.4324,
           latitudeDelta: 0.0922,
           longitudeDelta: 0.0421,
@@ -68,7 +67,7 @@ const MapScreen: React.FC<MapScreenProps> = ({ route }) => {
         {location && (
           <Marker
             title="Location from Post"
-            description={route.params.location}
+            description={route.params.location}  
             coordinate={location}
             onPress={() => console.log('marker is pressed')}
           />

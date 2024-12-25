@@ -1,4 +1,4 @@
-import { FC, useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
     Dimensions,
     Image,
@@ -8,42 +8,76 @@ import {
     TouchableWithoutFeedback,
     View,
     ScrollView,
-    TouchableOpacity
+    TouchableOpacity,
+    Text,
 } from "react-native";
 import { colors } from "../styles/global";
-import UpArrowIcon from "@/icons/UpArrowIcon";
+import { useDispatch, useSelector } from 'react-redux';
+import { addComment, setComments } from '../redux/reducers/commentsSlice';
+import { doc, collection, getDocs, addDoc } from "firebase/firestore";
+import { db } from '../newConfig';
+import UpArrowIcon from "../icons/UpArrowIcon";
+import { selectCommentsByPostId } from '../redux/reducers/commentsSlice';
 
 const { width: SCREEN_WIDTH } = Dimensions.get("screen");
 
-const CommentsScreen = () => {
+const CommentsScreen = ({ route }) => {
+    const dispatch = useDispatch();
+    const { postId, postImage } = route.params;
+    const comments = useSelector(selectCommentsByPostId(postId));
+    const [commentText, setCommentText] = useState("");
+
+    const fetchComments = async () => {
+        const commentsRef = collection(doc(db, 'posts', postId), 'comments');
+        const commentsSnapshot = await getDocs(commentsRef);
+        const fetchedComments = commentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        dispatch(setComments({ postId, comments: fetchedComments }));
+    };
+
+    useEffect(() => {
+        fetchComments();
+    }, [postId]);
+
+    const handleCommentSubmit = async () => {
+        if (commentText.trim() === "") return;
+
+        const newComment = {
+            text: commentText,
+            createdAt: new Date().toISOString(),
+        };
+
+        const commentsRef = collection(doc(db, 'posts', postId), 'comments');
+
+        await addDoc(commentsRef, newComment);
+
+        dispatch(addComment({ postId, comment: newComment }));
+
+        setCommentText("");
+    };
+
     return (
         <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-            <ScrollView
-                style={styles.container}
-                contentContainerStyle={styles.contentContainer}
-            >
-
+            <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
                 <View style={styles.PostContainer}>
-                    <Image
-                        source={require("../assets/images/forest.jpeg")}
-                        style={styles.postImage}
-                    />
+                    <Image source={{ uri: postImage }} style={styles.postImage} />
                 </View>
-
+                {comments.map(comment => (
+                    <View key={`${postId}-${comment.id}`} style={styles.commentContainer}>
+                        <Text>{comment.text}</Text>
+                    </View>
+                ))}
                 <View style={styles.inputContainer}>
                     <TextInput
                         style={styles.input}
                         placeholder="Коментувати..."
                         placeholderTextColor="#BDBDBD"
-                    // value={ }
+                        onChangeText={setCommentText}
+                        value={commentText}
                     />
-                    <TouchableOpacity
-                        style={styles.photoCircle}
-                    >
+                    <TouchableOpacity style={styles.photoCircle} onPress={handleCommentSubmit}>
                         <UpArrowIcon />
                     </TouchableOpacity>
                 </View>
-
             </ScrollView>
         </TouchableWithoutFeedback>
     );
@@ -104,6 +138,9 @@ const styles = StyleSheet.create({
         position: 'absolute',
         bottom: 0,
         left: 16,
+    },
+    commentContainer: {
+        width: SCREEN_WIDTH - 32,
     }
 
 });
