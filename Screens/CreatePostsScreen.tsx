@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
 		borderBottomWidth: 1,
 		marginBottom: 16,
 		fontSize: 16,
-		fontWeight: 500,
+		fontWeight: "500",
 	},
 	locationInput: {
 		width: "100%",
@@ -336,7 +336,7 @@ const styles = StyleSheet.create({
 		borderBottomWidth: 1,
 		marginBottom: 16,
 		fontSize: 16,
-		fontWeight: 500,
+		fontWeight: "500",
 		paddingLeft: 28,
 	},
 	locationIcon: {

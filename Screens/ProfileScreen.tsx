@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
 	},
 	profileName: {
 		marginTop: 92,
-		fontWeight: 500,
+		fontWeight: "500",
 		fontSize: 30,
 		color: '#212121',
 		marginBottom: 33,
